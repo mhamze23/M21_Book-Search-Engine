@@ -1,30 +1,18 @@
-//  import React, { useState, useEffect } from 'react';
-// Import necessary libraries and components
-import {
-  Container,
-  Card,
-  Button,
-  Row,
-  Col
-} from 'react-bootstrap';
+import React from 'react';
+import { Container, Card, Button, Row, Col } from 'react-bootstrap';
+import { useQuery, useMutation } from '@apollo/client';
+
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
-import { useQuery, useMutation } from '@apollo/client';
 import { REMOVE_BOOK } from '../utils/mutations';
 import { GET_ME } from '../utils/queries';
 
-// Define the SavedBooks component
 const SavedBooks = () => {
-  // Query for getting user data
   const { loading, data } = useQuery(GET_ME);
-  // Mutation for removing a book
-  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
-  // Get user data
+  const [removeBook, { error: mutationError }] = useMutation(REMOVE_BOOK);
   const userData = data?.me || {};
 
-  // Function to delete a book using its Mongo _id
   const handleDeleteBook = async (bookId) => {
-    // Get token for authentication
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
     if (!token) {
@@ -32,25 +20,27 @@ const SavedBooks = () => {
     }
 
     try {
-      // Try to remove the book
       const response = await removeBook({ variables: { bookId } });
       console.log('Deleted record: ', response);
-      if (error) {
-        console.error(error);
-      }
-      // Remove the book id from localStorage
       removeBookId(bookId);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // If data isn't here yet, display loading message
-  if (!userDataLength) {
-    return <h2>LOADING...</h2>;
+  // Handle any errors from the mutation outside the try...catch block
+  if (mutationError) {
+    console.error(mutationError);
   }
 
-  // Render the component
+  if (loading) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (!userData.savedBooks || !userData.savedBooks.length) {
+    return <h2>No saved books...</h2>;
+  }
+
   return (
     <>
       <div fluid className="text-light bg-dark p-5">

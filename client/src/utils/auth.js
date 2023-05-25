@@ -46,4 +46,7 @@ class AuthService {
   }
 }
 
-export default new AuthService();
+// Instantiate a new AuthService and export it
+const authService = new AuthService();
+export default authService;
+
