@@ -1,21 +1,43 @@
-const express = require('express');
-const path = require('path');
-const db = require('./config/connection');
-const routes = require('./routes');
+// Import JSON Web Token library
+const jwt = require('jsonwebtoken');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+// Set token secret and expiration date
+const secret = 'mysecretsshhhhh';
+const expiration = '2h';
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+module.exports = {
+  // Function for our authenticated routes
+  authMiddleware: function (req, _, next) {  // res is not used in this middleware function, so replace it with an underscore (_)
+    // Allow token to be sent via req.query or headers
+    let token = req.query.token || req.headers.authorization;
 
-// if we're in production, serve client/build as static assets
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-}
+    // If authorization header exists, extract the token value
+    if (req.headers.authorization) {
+      token = token.split(' ').pop().trim();  // ["Bearer", "<tokenvalue>"]
+    }
 
-app.use(routes);
+    // If no token, return the request as it is
+    if (!token) {
+      return req;
+    }
 
-db.once('open', () => {
-  app.listen(PORT, () => console.log(`🌍 Now listening on localhost:${PORT}`));
-});
+    // Verify token and get user data out of it
+    try {
+      const { data } = jwt.verify(token, secret, { maxAge: expiration });
+      req.user = data;  // Attach user data to the request object
+    } catch {
+      console.log('Invalid token');  // Log if token is invalid
+    }
+
+    return req;  // Return the request object with user data
+  },
+
+  // Function to generate a new JSON Web Token
+  signToken: function ({ username, email, _id }) {
+    // Define the data payload for the token
+    const payload = { username, email, _id };
+
+    // Return a new signed JWT
+    return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
+  },
+};
