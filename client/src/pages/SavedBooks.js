@@ -1,4 +1,3 @@
-import React from 'react';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
 import { useQuery, useMutation } from '@apollo/client';
 
@@ -20,25 +19,23 @@ const SavedBooks = () => {
     }
 
     try {
-      const response = await removeBook({ variables: { bookId } });
-      console.log('Deleted record: ', response);
+      await removeBook({
+        variables: { bookId },
+      });
+
+      if (mutationError) {
+        throw new Error("Something went wrong while deleting the book!");
+      }
+      // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Handle any errors from the mutation outside the try...catch block
-  if (mutationError) {
-    console.error(mutationError);
-  }
-
+  // if data isn't here yet, say so
   if (loading) {
-    return <h2>Loading...</h2>;
-  }
-
-  if (!userData.savedBooks || !userData.savedBooks.length) {
-    return <h2>No saved books...</h2>;
+    return <h2>LOADING...</h2>;
   }
 
   return (

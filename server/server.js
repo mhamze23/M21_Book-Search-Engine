@@ -1,43 +1,51 @@
-// Import JSON Web Token library
-const jwt = require('jsonwebtoken');
+// Import required modules
+const express = require('express'); 
+const { ApolloServer } = require('apollo-server-express') 
+const { authMiddleware } = require('./utils/auth'); 
+const { typeDefs, resolvers } = require('./schemas') 
 
-// Set token secret and expiration date
-const secret = 'mysecretsshhhhh';
-const expiration = '2h';
+const path = require('path'); 
+const db = require('./config/connection'); 
 
-module.exports = {
-  // Function for our authenticated routes
-  authMiddleware: function (req, _, next) {  // res is not used in this middleware function, so replace it with an underscore (_)
-    // Allow token to be sent via req.query or headers
-    let token = req.query.token || req.headers.authorization;
+// Initialize an Express application
+const app = express();
+// Define the port
+const PORT = process.env.PORT || 3001;
+// Initialize Apollo server with type definitions, resolvers, and context middleware
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: authMiddleware,
+});
 
-    // If authorization header exists, extract the token value
-    if (req.headers.authorization) {
-      token = token.split(' ').pop().trim();  // ["Bearer", "<tokenvalue>"]
-    }
+// Middleware for parsing request body
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
-    // If no token, return the request as it is
-    if (!token) {
-      return req;
-    }
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+}
 
-    // Verify token and get user data out of it
-    try {
-      const { data } = jwt.verify(token, secret, { maxAge: expiration });
-      req.user = data;  // Attach user data to the request object
-    } catch {
-      console.log('Invalid token');  // Log if token is invalid
-    }
+// Route for serving the React HTML entry point
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
 
-    return req;  // Return the request object with user data
-  },
+// Function for starting Apollo server
+const startApolloServer = async () => {
+  // Start the server
+  await server.start();
+  // Apply middleware to Express app
+  server.applyMiddleware({ app });
 
-  // Function to generate a new JSON Web Token
-  signToken: function ({ username, email, _id }) {
-    // Define the data payload for the token
-    const payload = { username, email, _id };
+  // Start Express app when the database connection is open
+  db.once('open', () => {
+    app.listen(PORT, () => {
+      console.log(`Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`);
+    });  
+  });
+}
 
-    // Return a new signed JWT
-    return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
-  },
-};
+// Call the function to start the server
+startApolloServer();

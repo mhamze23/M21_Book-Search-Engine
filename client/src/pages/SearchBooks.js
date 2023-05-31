@@ -17,13 +17,16 @@ const SearchBooks = () => {
   // State to hold saved bookId values
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
 
+  // State to hold any error messages
+  const [errorMessage, setErrorMessage] = useState('');
+
   // Mutation hook for saving a book
   const [saveBook] = useMutation(SAVE_BOOK);
 
   // Effect hook to save `savedBookIds` list to localStorage when component unmounts
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
-  });
+  }, [savedBookIds]);
 
   // Function to handle form submission and search for books
   const handleFormSubmit = async (event) => {
@@ -55,8 +58,10 @@ const SearchBooks = () => {
       // Update state with new book data and clear search input
       setSearchedBooks(bookData);
       setSearchInput('');
+      setErrorMessage(''); // Clear any previous error messages
     } catch (err) {
       console.error(err);
+      setErrorMessage('An error occurred while searching for books. Please try again.');
     }
   };
 
@@ -76,8 +81,10 @@ const SearchBooks = () => {
 
       // Save book id to state if the book was successfully saved to user's account
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+      setErrorMessage(''); // Clear any previous error messages
     } catch (err) {
       console.error(err);
+      setErrorMessage('An error occurred while saving the book. Please try again.');
     }
   };
 
@@ -87,6 +94,7 @@ const SearchBooks = () => {
       <div className="text-light bg-dark p-5">
         <Container>
           <h1>Search for Books!</h1>
+          {errorMessage && <p className="alert alert-danger">{errorMessage}</p>}
           <Form onSubmit={handleFormSubmit}>
             <Row>
               <Col xs={12} md={8}>

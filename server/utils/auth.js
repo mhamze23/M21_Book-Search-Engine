@@ -1,43 +1,40 @@
-// Import JSON Web Token library
-const jwt = require('jsonwebtoken');
-
-// Set token secret and expiration date
-const secret = 'mysecretsshhhhh';
-const expiration = '2h';
-
 module.exports = {
-  // Function for our authenticated routes
-  authMiddleware: function (req, _, next) {  // res is not used in this middleware function, so replace it with an underscore (_)
-    // Allow token to be sent via req.query or headers
-    let token = req.query.token || req.headers.authorization;
+  // Middleware to authenticate routes
+  authMiddleware: function ({ req, res }) { // include 'res' here
+    // Extract token from request body, query, or headers
+    let token = req.body.token || req.query.token || req.headers.authorization;
 
-    // If authorization header exists, extract the token value
+    // If token was sent in the Authorization header, remove "Bearer" from the string
     if (req.headers.authorization) {
-      token = token.split(' ').pop().trim();  // ["Bearer", "<tokenvalue>"]
+      token = token.split(' ').pop().trim();
     }
 
-    // If no token, return the request as it is
+    // If no token was provided, return the request object as is
     if (!token) {
       return req;
     }
 
-    // Verify token and get user data out of it
+    // If a token is present, try to verify it and attach user data to the request
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
-      req.user = data;  // Attach user data to the request object
+      req.user = data;
     } catch {
-      console.log('Invalid token');  // Log if token is invalid
+      // If the token is not valid, respond with an error
+      console.log('Invalid token');
+      return res.status(400).json({ message: 'invalid token!' }); // 'res' should be available here
     }
 
-    return req;  // Return the request object with user data
+    // Return the updated request object
+    return req;
   },
-
-  // Function to generate a new JSON Web Token
+  
+  // Function to generate a new JWT
   signToken: function ({ username, email, _id }) {
-    // Define the data payload for the token
+    // Define the data that will be included in the token
     const payload = { username, email, _id };
 
-    // Return a new signed JWT
+    // Sign the token with the secret key and the provided user data, set the token to expire as defined
     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
   },
 };
+
