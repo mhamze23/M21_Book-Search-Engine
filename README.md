@@ -59,6 +59,9 @@ THEN that book is deleted from my saved books list
 WHEN I click on the Logout button
 THEN I am logged out of the site and presented with a menu with the options Search for Books and Login/Signup and an input field to search for books and a submit button  
 ```
+![21-mern-homework-demo-01](https://github.com/mhamze23/M21_Book-Search-Engine/assets/115047281/06103b47-fdd5-4670-84e6-281e754cf443)
+![21-mern-homework-demo-02](https://github.com/mhamze23/M21_Book-Search-Engine/assets/115047281/ca2ace6d-b87c-4eb5-becf-61893378e8b5)
+![21-mern-homework-demo-03](https://github.com/mhamze23/M21_Book-Search-Engine/assets/115047281/7239c23e-0b8c-4604-997c-b117aff58b28)
 
 
 ## Mock-Up
